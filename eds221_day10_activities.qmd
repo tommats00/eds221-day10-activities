@@ -1,0 +1,85 @@
+---
+title: "EDS Day 10 Activities"
+author: "Tom Gibbens-Matsuyama"
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+## Load Libraries and Read Data
+
+```{r}
+library(here)
+library(tidyverse)
+library(dplyr)
+
+ice_cover <- read_csv(here("data", "ntl33_v7.csv"), na = c("-999", ""))
+meteor_data <- read_csv(here("data", "ntl20_v6.csv"))
+```
+
+## Create ggplot
+
+```{r}
+ggplot(data = ice_cover, aes(fill = lakeid, x = ice_duration)) +
+  geom_histogram() +
+  labs(x = "Ice Duration (days)",
+       y = "Count",
+       title = "Ice Duration Per Lake")
+
+
+```
+
+```{r}
+mean_ice <- ice_cover %>% 
+  group_by(year4) %>% 
+  summarize(mean_ice = mean(ice_duration, na.rm = TRUE))
+
+## Graphing this data
+
+ggplot(mean_ice, aes(x = year4, y = mean_ice)) +
+  geom_line()
+```
+
+
+## Mean Air temp df
+```{r}
+mean_air <- meteor_data %>% 
+  filter(month %in% c(1, 2, 12)) %>% 
+  group_by(year4) %>% 
+  summarize(mean_temp = mean(ave_air_temp_adjusted))
+  
+
+```
+
+
+## Mean Air ggplot
+```{r}
+ggplot(data = mean_air, aes(x = year4, y = mean_temp)) +
+  geom_line()
+```
+
+## Joining Data Frames
+```{r}
+mean_join <- left_join(mean_air, mean_ice)
+```
+
+```{r}
+ggplot(mean_join, aes(x = mean_temp, y = mean_ice, color = year4)) +
+  geom_point()
+```
+
+## Isolate ice off data
+```{r}
+thaw_data <- ice_cover %>% 
+  filter(year4 >= 1970) %>% 
+  mutate(ice_off_date = ymd(ice_off)) %>% 
+  mutate(day = lubridate::yday(ice_off_date))
+```
+
+## create ggplot of data
+```{r}
+ggplot(thaw_data, aes(x = year4, y = day)) +
+  geom_line()
+```
+
